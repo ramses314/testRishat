@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<title>Мой первый проект</title>
+		<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
+		<link rel="stylesheet" type="text/css" href="{% static 'store/css/style.css' %}">
+		<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+		<script src="https://js.stripe.com/v3/"></script>
+		<script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
+	</head>
+
+	<body>
+		<div class="wrapper">
+			<div class="nav">
+				<div class="container">
+					<div class="nav__wrapper">
+						<div class="nav__logo">
+							<a href="#">
+								STORE
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="content">
+				<div class="container">
+					<div class="product">
+						<div class="product__items">
+							{% for p in products %}
+							<div class="product__item">
+								<div class="product__photo small">
+									<a href="{% url 'store:get_item' p.id %}">
+										<img src="{{ p.image.url }}" alt="">
+									</a>
+								</div>
+								<div class="product__undercard">
+									<div class="product__text small">
+										<div class="product__name">
+											<a href="{% url 'store:get_item' p.id %}">
+											    {{ p.name }}
+											</a>
+										</div>
+										<div class="product__price">
+											<a href="{% url 'store:get_item' p.id %}">
+											    {{ p.price }}{{ p.currency }}
+											</a>
+										</div>
+									</div>
+									<div class="product__button small">
+										<a href="{% url 'store:get_item' p.id %}">
+											<input type="submit" value="Подробнее">
+										</a>
+									</div>
+								</div>
+							</div>
+							{% endfor %}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			var stripe = Stripe("{{ public_key }}");
+			var handleResult = function (result) {
+			  if (result.error) {
+				var displayError = document.getElementById("error-message");
+				displayError.textContent = result.error.message;
+			  }
+			};
+			var createCheckoutSession = function() {
+			  return fetch("/buy/{{ p.id }}/", {
+				method: "GET",
+				// ... body section if you want to pass the product or price_id to the backend
+			  }).then(function(result) {
+				return result.json();
+			  });
+			};
+
+			document.getElementById("buy-btn")
+			.addEventListener("click", function(evt) {
+				createCheckoutSession().then(function(data) {
+				  // Call Stripe.js method to redirect to the new Checkout page
+				  stripe
+					.redirectToCheckout(
+					  {
+						  sessionId: data.sessionId
+					  }
+					)
+					.then(handleResult);
+				});
+			  });
+		</script>
+
+	</body>
+</html>

@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<title>Мой первый проект</title>
+		<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
+		<link rel="stylesheet" type="text/css" href="{% static 'store/css/style.css' %}">
+		<link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+        <title>Купить {{ item.name }}</title>
+        <script src="https://js.stripe.com/v3/"></script>
+	</head>
+	<body>
+		<div class="wrapper">
+			<div class="nav">
+				<div class="container">
+					<div class="nav__wrapper">
+						<div class="nav__logo">
+                            <a href="{% url 'store:home' %}">
+                                STORE
+                            </a>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="content">
+				<div class="container">
+					<div class="detail">
+						<div class="detail__img">
+							<img src="{{ item.image.url }}" alt="">
+						</div>
+						<div class="detail__items">
+							<div class="detail__name">
+								{{ item.name }}
+							</div>
+							<div class="detail__desc">
+								{{ item.description }}
+							</div>
+							<div class="detail__price">
+								{{ item.price }} {{ item.currency }}
+							</div>
+							<div class="detail__button">
+								<button type="button" id="buy-btn">Купить</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+     <script>
+        var stripe = Stripe("{{ public_key }}");
+        var handleResult = function (result) {
+          if (result.error) {
+            var displayError = document.getElementById("error-message");
+            displayError.textContent = result.error.message;
+          }
+        };
+        var createCheckoutSession = function() {
+          return fetch("/buy/{{ item.id }}/", {
+            method: "GET",
+            // ... body section if you want to pass the product or price_id to the backend
+          }).then(function(result) {
+            return result.json();
+          });
+        };
+
+        document.getElementById("buy-btn")
+        .addEventListener("click", function(evt) {
+            createCheckoutSession().then(function(data) {
+              // Call Stripe.js method to redirect to the new Checkout page
+              stripe
+                .redirectToCheckout(
+                  {
+                      sessionId: data.sessionId
+                  }
+                )
+                .then(handleResult);
+            });
+          });
+      </script>
+
+	</body>
+</html>
